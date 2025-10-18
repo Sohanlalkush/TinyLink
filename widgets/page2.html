@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 2 - Preparing Link</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; width: 100%; text-align: center; }
+        h1 { color: #333; margin-bottom: 20px; }
+        #widget2 { margin: 30px 0; }
+        #widget2 p { font-size: 18px; color: #555; }
+        #timer2 { color: #667eea; font-weight: bold; font-size: 24px; }
+        a { display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; transition: all 0.3s; }
+        a:hover { background: #5568d3; transform: scale(1.05); }
+        .info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 2 of 3</h1>
+        <div id="widget2"></div>
+        <div class="info">Please wait while we prepare your link...</div>
+    </div>
+
+    <script>
+    let t2 = 10;
+    const div2 = document.getElementById("widget2");
+    div2.innerHTML = `<p>Preparing your link... <span id='timer2'>10</span>s</p>`;
+    const interval2 = setInterval(() => {
+        t2--;
+        document.getElementById("timer2").innerText = t2;
+        if (t2 <= 0) {
+            clearInterval(interval2);
+            div2.innerHTML = `<a href="page3.html" id="nextLink">Get Your Link (Final Step)</a>`;
+        }
+    }, 1000);
+    </script>
+</body>
+</html>

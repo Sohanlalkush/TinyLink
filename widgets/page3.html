@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 3 - Final Step</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; width: 100%; text-align: center; }
+        h1 { color: #333; margin-bottom: 20px; }
+        #widget3 { margin: 30px 0; }
+        #widget3 p { font-size: 18px; color: #555; }
+        #timer3 { color: #667eea; font-weight: bold; font-size: 24px; }
+        a { display: inline-block; padding: 15px 40px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; transition: all 0.3s; }
+        a:hover { background: #218838; transform: scale(1.05); }
+        .info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; color: #666; font-size: 14px; }
+        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 3 of 3 - Final Step</h1>
+        <div id="widget3"></div>
+        <div class="info">Almost there! Your link will be ready in a moment.</div>
+    </div>
+
+    <script>
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+        return match ? match[2] : null;
+    }
+
+    const code = getCookie("short_code");
+    if (!code) {
+        document.getElementById("widget3").innerHTML = "<p style='color: red;'>Error: No short code found. Please start from the beginning.</p>";
+    } else {
+        let time = 10;
+        const w3 = document.getElementById("widget3");
+        w3.innerHTML = `<p>Generating your final link... <span id='timer3'>10</span>s</p>`;
+        const timer = setInterval(() => {
+            time--;
+            document.getElementById("timer3").innerText = time;
+            if (time <= 0) {
+                clearInterval(timer);
+                const apiUrl = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ":" + window.location.port : "") + "/api/getlink.php";
+                
+                fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.url) {
+                        w3.innerHTML = `<div class="success"><p>✅ Success! Your link is ready:</p></div><br><a href="${data.url}" target="_blank">Visit Link</a>`;
+                    } else {
+                        w3.innerHTML = "<p style='color: red;'>Link not found or expired.</p>";
+                    }
+                })
+                .catch(err => {
+                    w3.innerHTML = "<p style='color: red;'>Error loading link. Please try again.</p>";
+                });
+            }
+        }, 1000);
+    }
+    </script>
+</body>
+</html>

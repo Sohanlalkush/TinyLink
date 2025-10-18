@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 1 - Please Wait</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; width: 100%; text-align: center; }
+        h1 { color: #333; margin-bottom: 20px; }
+        #widget1 { margin: 30px 0; }
+        #widget1 p { font-size: 18px; color: #555; }
+        #timer1 { color: #667eea; font-weight: bold; font-size: 24px; }
+        button { padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: all 0.3s; }
+        button:hover { background: #5568d3; transform: scale(1.05); }
+        .info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 1 of 3</h1>
+        <div id="widget1"></div>
+        <div class="info">Please wait for the timer to complete before proceeding to the next step.</div>
+    </div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("ref");
+    if (code) {
+        document.cookie = "short_code=" + code + "; path=/; max-age=3600";
+    }
+
+    let timeLeft = 10;
+    const div = document.getElementById("widget1");
+    div.innerHTML = `<p>Please wait <span id='timer1'>10</span> seconds...</p>`;
+    const interval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer1").innerText = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            div.innerHTML = `<a href="page2.html"><button>Continue to Step 2</button></a>`;
+        }
+    }, 1000);
+    </script>
+</body>
+</html>
