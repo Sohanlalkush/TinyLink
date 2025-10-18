@@ -1,0 +1,232 @@
+Goal:
+Build a minimal resource PHP + MySQL based URL shortener with only the essential features, supporting both public users (no login) and registered users with a basic dashboard.
+Include an admin panel, OTP email signup, and 3-step external widget flow for redirect and ad handling.
+
+🔧 Key Functional Requirements
+1. Public URL Shortener (No Login Required)
+
+Simple home page with one input field for long URLs and a “Shorten” button.
+
+When a user submits a URL:
+
+If the same URL already exists in the database, return the same short URL (no duplicates).
+
+Otherwise, generate a new short code (e.g. base62 random string).
+
+Store only:
+
+id, long_url, short_code, click_count, created_at, user_id (nullable).
+
+2. User System
+
+Users can:
+
+Sign up with email (verified by OTP via SMTP).
+
+Log in / Reset password (also via OTP email).
+
+Create new short links (same as public users).
+
+See a dashboard with a list of their shortened URLs and total click count per URL.
+
+Edit/Delete their links if needed.
+
+No detailed analytics or IP logging — just simple click counters to keep it light.
+
+3. Admin Area
+
+Admin login (separate credentials or marked via is_admin flag).
+
+Admin can:
+
+View all links and users.
+
+Delete or edit any link or user.
+
+Create short links manually.
+
+Generate short links via a private API key (for automation).
+
+Optional: basic search for links by keyword.
+
+💾 Database Schema (Simple)
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255),
+  otp_code VARCHAR(10),
+  otp_expiry DATETIME,
+  is_verified TINYINT(1) DEFAULT 0,
+  is_admin TINYINT(1) DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE links (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  long_url TEXT NOT NULL,
+  short_code VARCHAR(10) UNIQUE NOT NULL,
+  click_count INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+🚀 Redirect Logic
+
+Short URL format:
+https://yourdomain.com/{short_code}
+
+On visit:
+
+Lookup in DB by short_code.
+
+Increment click_count.
+
+Redirect to:
+https://external-website.com/page1.html?ref={short_code}
+(so your ad pages handle the redirection flow using the widgets described below).
+
+🌐 3-Step External Widget System (for ad/timer flow)
+
+The idea:
+Users first visit page1.html on the external site with ?ref=shortcode, then are guided through a 3-step flow before reaching the actual target link.
+
+✅ Widget 1 (on page1.html)
+
+Purpose: store short code in cookie and prepare user for next step.
+
+<div id="widget1"></div>
+<script>
+const params = new URLSearchParams(window.location.search);
+const code = params.get("ref");
+if (code) {
+  document.cookie = "short_code=" + code + "; path=/";
+}
+let timeLeft = 30;
+const div = document.getElementById("widget1");
+div.innerHTML = `<p>Please wait <span id='timer1'>30</span> seconds...</p>`;
+const interval = setInterval(() => {
+  timeLeft--;
+  document.getElementById("timer1").innerText = timeLeft;
+  if (timeLeft <= 0) {
+    clearInterval(interval);
+    div.innerHTML = `<button id='goNext'>Continue</button>`;
+    document.getElementById("goNext").onclick = () => {
+      document.getElementById("goNext").innerText = "Scrolling...";
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    };
+  }
+}, 1000);
+</script>
+
+✅ Widget 2 (on middle section or page2.html)
+
+Purpose: second timer before redirect to page3.
+
+<div id="widget2"></div>
+<script>
+let t2 = 30;
+const div2 = document.getElementById("widget2");
+div2.innerHTML = `<p>Preparing your link... <span id='timer2'>30</span>s</p>`;
+const interval2 = setInterval(() => {
+  t2--;
+  document.getElementById("timer2").innerText = t2;
+  if (t2 <= 0) {
+    clearInterval(interval2);
+    div2.innerHTML = `<a href="page3.html" id="nextLink">Get Link</a>`;
+  }
+}, 1000);
+</script>
+
+✅ Widget 3 (on page3.html)
+
+Purpose: final timer + fetch actual destination URL from PHP site via POST using short code from cookie.
+
+<div id="widget3"></div>
+<script>
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? match[2] : null;
+}
+const code = getCookie("short_code");
+let time = 30;
+const w3 = document.getElementById("widget3");
+w3.innerHTML = `<p>Generating your final link... <span id='timer3'>30</span>s</p>`;
+const timer = setInterval(() => {
+  time--;
+  document.getElementById("timer3").innerText = time;
+  if (time <= 0) {
+    clearInterval(timer);
+    fetch("https://yourdomain.com/api/getlink.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.url) {
+        w3.innerHTML = `<a href="${data.url}" target="_blank">Visit Link</a>`;
+      } else {
+        w3.innerHTML = "<p>Link not found or expired.</p>";
+      }
+    });
+  }
+}, 1000);
+</script>
+
+⚙️ PHP API — api/getlink.php
+
+Handles POST requests from Widget 3.
+
+<?php
+include '../db.php'; // connect PDO $db
+
+header("Content-Type: application/json");
+$data = json_decode(file_get_contents("php://input"), true);
+$code = trim($data['code'] ?? '');
+
+$stmt = $db->prepare("SELECT long_url FROM links WHERE short_code = ?");
+$stmt->execute([$code]);
+$link = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($link) {
+    echo json_encode(["url" => $link['long_url']]);
+} else {
+    echo json_encode(["error" => "Invalid code"]);
+}
+
+📦 Folder Structure
+/project
+  /public
+    index.php          # Public shorten form
+    redirect.php       # Handles short URL redirect logic
+  /user
+    login.php
+    signup.php
+    dashboard.php
+  /admin
+    index.php
+  /api
+    getlink.php
+  db.php               # PDO connection
+
+🔐 Email OTP (Simple Logic)
+Generate random 6-digit OTP.
+generet otp using js in browser
+
+Use PHP mail() or PHPMailer with SMTP config:
+
+Send OTP email.
+
+Verify OTP at signup / reset.
+do not save otp in db
+
+⚡ Performance Notes
+
+Use PDO prepared statements only.
+
+Use single DB query per action (no joins).
+
+Cache homepage via browser cache or static HTML.
+
+Don’t store IPs or analytics — just click count.
