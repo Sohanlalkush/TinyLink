@@ -7,41 +7,83 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; width: 100%; text-align: center; }
-        h1 { color: #333; margin-bottom: 20px; }
-        #widget1 { margin: 30px 0; }
-        #widget1 p { font-size: 18px; color: #555; }
-        #timer1 { color: #667eea; font-weight: bold; font-size: 24px; }
-        button { padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: all 0.3s; }
-        button:hover { background: #5568d3; transform: scale(1.05); }
-        .info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; color: #666; font-size: 14px; }
+        
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Step 1 of 3</h1>
-        <div id="widget1"></div>
-        <div class="info">Please wait for the timer to complete before proceeding to the next step.</div>
+    <!-- ================== WIDGET 1 ================== -->
+    <div id="widget1" class="pharma-widget" style="display:none; margin:20px 0; text-align:center;">
+      <div class="ad-block" style="margin-bottom:15px;">
+        <!-- Your ad code here -->
+        <p>[Ad placement 1]</p>
+      </div>
+      <div id="timer1" style="font-weight:bold; font-size:18px;">Please wait <span id="time1">30</span> seconds…</div>
+      <button id="btn1" style="display:none; margin-top:15px; padding:10px 20px; font-size:16px; background:#0069d9; color:white; border:none; border-radius:8px; cursor:pointer;">
+        Scroll down to find the link
+      </button>
+    </div>
+
+    <!-- ================== WIDGET 2 ================== -->
+    <div id="widget2" class="pharma-widget" style="display:none; margin:40px 0; text-align:center;">
+      <div class="ad-block" style="margin-bottom:15px;">
+        <!-- Your ad code here -->
+        <p>[Ad placement 2]</p>
+      </div>
+      <div id="timer2" style="font-weight:bold; font-size:18px;">Please wait <span id="time2">30</span> seconds…</div>
+      <button id="btn2" style="display:none; margin-top:15px; padding:10px 20px; font-size:16px; background:#28a745; color:white; border:none; border-radius:8px; cursor:pointer;">
+        Go to link page
+      </button>
     </div>
 
     <script>
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("ref");
-    if (code) {
-        document.cookie = "short_code=" + code + "; path=/; max-age=3600";
-    }
+    // Only show widgets if ?ref= exists in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasRef = urlParams.has('ref');
+    if (hasRef) {
+      document.getElementById('widget1').style.display = 'block';
+      document.getElementById('widget2').style.display = 'block';
 
-    let timeLeft = 10;
-    const div = document.getElementById("widget1");
-    div.innerHTML = `<p>Please wait <span id='timer1'>10</span> seconds...</p>`;
-    const interval = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer1").innerText = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(interval);
-            div.innerHTML = `<a href="page2.html"><button>Continue to Step 2</button></a>`;
+      // --- Widget 1 logic ---
+      let timer1 = 30;
+      const timeDisplay1 = document.getElementById('time1');
+      const btn1 = document.getElementById('btn1');
+      const interval1 = setInterval(() => {
+        timer1--;
+        timeDisplay1.textContent = timer1;
+        if (timer1 <= 0) {
+          clearInterval(interval1);
+          document.getElementById('timer1').style.display = 'none';
+          btn1.style.display = 'inline-block';
+          // When widget1 finishes, start widget2 timer
+          startWidget2();
         }
-    }, 1000);
+      }, 1000);
+
+      btn1.addEventListener('click', () => {
+        document.getElementById('widget2').scrollIntoView({behavior: 'smooth'});
+      });
+
+      // --- Widget 2 logic ---
+      function startWidget2(){
+        let timer2 = 30;
+        const timeDisplay2 = document.getElementById('time2');
+        const btn2 = document.getElementById('btn2');
+        const interval2 = setInterval(() => {
+          timer2--;
+          timeDisplay2.textContent = timer2;
+          if (timer2 <= 0) {
+            clearInterval(interval2);
+            document.getElementById('timer2').style.display = 'none';
+            btn2.style.display = 'inline-block';
+          }
+        }, 1000);
+
+        btn2.addEventListener('click', () => {
+          window.location.href = "https://www.pharmalite.in/p/ext-link.html";
+        });
+      }
+    }
     </script>
+
 </body>
 </html>
